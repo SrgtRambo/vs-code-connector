@@ -1,13 +1,18 @@
-# Logs
-logs
+.DS_Store
+node_modules/
+coverage/
+playwright-report/
+test-results/
+generated-projects/
+.env
+.env.*
+!.env.example
 *.log
 npm-debug.log*
-yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
 dist
 dist-ssr
 .output
@@ -24,7 +29,6 @@ dist-ssr
 .vscode/*
 !.vscode/extensions.json
 .idea
-.DS_Store
 *.suo
 *.ntvs*
 *.njsproj
