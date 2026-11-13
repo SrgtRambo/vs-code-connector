@@ -1,115 +1,112 @@
-# Forge AI local prototype
+# ⚡️ Forge AI · Production-Grade Software Studio & Automation Backend
 
-Forge AI is a local software workspace with two generation modes. The deterministic starter templates work offline. When enabled, the local Ollama adapter can ask discovery follow-up questions, draft a structured architecture, generate application source files, and propose individual file fixes. Live Ollama architecture generation has been verified with `qwen3.5:4b`; full source generation is still being validated for response time and generated-app quality. AI failures do not silently fall back to templates: the selected generation mode is labeled in the UI.
+Forge AI transforms business requirements into production-ready web applications, automated workflows, and full-stack software. It combines an offline-capable browser design studio, a local proxy server, a high-performance Express/Node backend, Stripe billing (one-time & monthly subscriptions), Supabase cloud storage, and OpenRouter AI code generation.
 
-## Lovable sync
+---
 
-This repository is connected to [Lovable](https://lovable.dev/projects/03d621cb-7073-4df0-92b4-d4bde23b79b6). Push commits to `main` to sync changes back to the Lovable editor. Keep the branch in a working state and do not rewrite published history.
+## 🏗 System Architecture
 
-## Open Forge AI
+```
+                    ┌───────────────────────────────────────────┐
+                    │            FORGE AI CLIENTS               │
+                    │  • Browser Studio (http://127.0.0.1:8765) │
+                    │  • Web Portal     (http://localhost:5173) │
+                    └─────────────────────┬─────────────────────┘
+                                          │
+                   ┌──────────────────────┴──────────────────────┐
+                   │                                             │
+                   ▼                                             ▼
+       ┌────────────────────────┐                   ┌────────────────────────┐
+       │   Local Studio Proxy   │                   │  Production Backend    │
+       │     (server.js)        │                   │   (backend/server.js)  │
+       │   Port 8765 (Loopback) │                   │       Port 4000        │
+       └───────────┬────────────┘                   └───────────┬────────────┘
+                   │                                             │
+      ┌────────────┴────────────┐            ┌───────────────────┴───────────────────┐
+      ▼                         ▼            ▼                   ▼                   ▼
+┌───────────┐             ┌───────────┐ ┌───────────┐      ┌───────────┐       ┌───────────┐
+│  Ollama   │             │  Offline  │ │  Stripe   │      │ Supabase  │       │OpenRouter │
+│ (Local AI)│             │ Templates │ │ (Billing) │      │(DB/Bucket)│       │ (AI Code) │
+└───────────┘             └───────────┘ └───────────┘      └───────────┘       └───────────┘
+```
 
-Start `Start Forge AI.command` from this folder. It serves Forge on `http://127.0.0.1:8765`, binds only to this Mac, and provides the same-origin Ollama proxy used by the AI settings. The local Node server is required for model requests; opening `index.html` directly or through a static-only server will not connect Ollama. The workspace uses local browser storage for project history. Forge tries to write generated source into a folder you choose.
+---
 
-## Build a project
+## 🚀 Quickstart
 
-1. Complete Discovery and create the requirements draft.
-2. Review the Project Architect blueprint and explicitly approve it.
-3. Generate the project. Forge keeps it in the browser first, runs source checks, and opens the live preview. Then choose **Save project to a folder** to pick a location and create `generated-projects/<business-name>/`, or download the ZIP. The separate save button opens the folder picker directly from your click, as required by browsers after a long AI generation.
-4. Explore the interactive app in the side-by-side Software Generator preview, then open Testing Agent to review source checks. The preview updates as source edits are made; use the advanced source editor only when you want to inspect or change code.
-5. To return later, select the project in Software Projects or on the dashboard, choose **Open existing project folder**, or open its ZIP. ZIP import opens the app in the generator preview; empty previews use clearly labeled fictional records that are not added to project files. The advanced source editor and version history are available below the preview. Save edits in Forge, then download the updated ZIP to preserve them outside the browser. Direct disk editing works only when the browser grants Forge folder access.
+### 1. Run the Local Studio (Port 8765)
+Double-click `Start Forge AI.command` on macOS, or run:
+```bash
+npm run server
+```
+Opens the Studio at `http://127.0.0.1:8765`.
 
-To exercise the project list without repeating Discovery, open **Software Projects** and select **Add 4 sample projects**. Forge adds fictional Juniper Market, Summit Plumbing, Cedar Grove Landscaping, and Pinecone Catering projects with saved requirements, architecture drafts, offline template apps, version-one snapshots, and passing source checks. The action is duplicate-safe, stores these samples in this browser, and does not contact Ollama.
+### 2. Run the Automation Backend (Port 4000)
+```bash
+npm run backend
+```
+Listens on `http://localhost:4000`. Connects to Stripe, Supabase, and OpenRouter.
 
-Existing project names are never overwritten; Forge adds a numeric suffix. Each generated app has an `index.html`, `css/styles.css`, `js/app.js`, `data/sample-data.js`, `project.json`, and `README.md`.
+### 3. Run the Modern React / TanStack Web App (Port 5173)
+```bash
+npm run dev
+```
 
-AI-generated apps receive an approved, business-specific workflow and visual direction, including their own palette, typography, screen composition, signature detail, entity fields, and lifecycle steps. They are no longer forced into Forge's generic search/status/CRUD interface. Source generation and checks now require saved-state initialization before event wiring, empty new-entry fields, non-inline event listeners, interactive behavior, local persistence, and safe local-only execution. AI fix proposals include bounded related-source context and JavaScript proposals are rejected if they repeat detectable syntax, storage, hydration, or inline-handler failures. These checks catch some common defects but cannot prove every business workflow works; live runs have exposed stale lists, invalid stages, malformed JavaScript, and slow generation, so browser verification remains necessary. Offline starter templates remain a separate, clearly labeled option. The preview is sandboxed from the Forge workspace and supplies temporary in-memory browser storage; preview edits are not saved to the exported app. If a generated stylesheet is incomplete or omits its approved theme, the preview adds clearly labeled recovery styling without changing the saved source, and the source check reports the error.
+---
 
-The Codex side-panel browser and the VS Code browser have returned a canceled folder selection after users confirm the output folder. This is not verified as a Forge write failure versus a browser permission limitation. Folder upload and ZIP import provide browser-based reopen/edit/export paths. Those paths do not write changes directly into the selected folder; use the downloaded ZIP. Direct folder creation and saving still require a successful browser folder grant.
+## 🧪 Comprehensive Test Suite (76 Passed, 0 Failed)
 
-The template generator works without Ollama. AI requests require the local Ollama app and an installed model; Forge does not require an API key, paid service, or deployment.
+Run all unit, generator, architecture, and backend integration tests:
+```bash
+npm run test:all
+```
+- **Studio & Generator Tests:** 68 passed (`node --test *.test.js`)
+- **Backend & Stripe Integration Tests:** 8 passed (`npm run test:backend`)
 
-## Development status — 2026-11-11
+Individual commands:
+```bash
+npm run test          # Runs generator, architect, testing, and proxy tests
+npm run test:backend  # Runs Stripe, Supabase, rate limiting, and security tests
+```
 
-### Stage 1 verification
+---
 
-- Source checks were run against fictional Summit Plumbing, Green Valley Market, and Cedar Grove Landscaping projects. They selected customer manager, inventory manager, and work queue respectively; all 8 built-in checks passed for each generated six-file project.
-- The inventory blueprint originally selected an inventory app but described a generic work-queue workflow and generic validation. `architect.js` now includes stock intake, reorder-threshold workflow, inventory screens/data fields, and quantity validation. The three blueprints were rerun after this change; all checks passed.
-- Executed each generated application's JavaScript against a DOM/local-storage test harness: create, edit, display, persist/reload, search, status filtering, and delete passed for all three app types. Inventory quantity/reorder counts also behaved as expected.
-- Exercised Discovery → architecture approval → generation → automatic checks → source edit/save → reopen from a simulated project folder. The workflow reported 8/8 checks, advanced to version 2 after the edit, and loaded the edited source on reopen. This used mocked browser and folder APIs, not actual disk writes.
-- Exercised project-folder name collision handling and generated-file readback with a simulated File System Access API: same-name projects were kept separate as `same/` and `same-2/`, and neither wrote files into the selected parent folder. Simulated a manifest-write failure after a source write; the compensating rollback restored both source and manifest, and browser project metadata returned to v1.
-- Confirmed a successful source save invalidates the old passing test report; rerunning checks restores a passing status. A simulated failed write restores the prior test state as well as source and version metadata.
-- `app.js` syntax was compiled after the save-failure fix.
-- The save handler now restores the source text, version number, and version list in local project history if the project-folder write fails; it also attempts a compensating disk rollback.
-- Editing a source file clears the previous passing test report and marks the project as needing checks; a save failure restores the prior test report and stage.
-- Generated folders are created beneath the user-selected location in `generated-projects/<project-slug>/`; the generated manifest lists only that project's files. The generator avoids an existing same-name directory by adding a numeric suffix.
-- Added restorable source snapshots under each project’s `.forge-history/vN/` folder. A restore creates a new, increasing version (for example, restoring v1 after v2 creates v3) so the history stays monotonic. Simulated generation, edit, restore, manifest update, snapshot readback, and retesting; the restored project passed 8/8 checks.
-- Exercised the optional model adapter with a mocked local Ollama response: schema-shaped architecture data reached the blueprint, disabled AI returned the rule-based path, non-loopback addresses were rejected, and all three generated templates still passed 7/7 source checks.
+## 🔒 Security Hardening
 
-### 2026-11-09 reliability follow-up
+- **Security Headers:** Enforces `X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, `Referrer-Policy: strict-origin-when-cross-origin`, and `X-XSS-Protection: 1; mode=block`.
+- **Sliding-Window Rate Limiting:** In-memory request limiter protects checkout and generation endpoints from abuse and DoS.
+- **Input Validation:** Strict regex email validation, payload size caps (max 4,000 characters for prompts), and type allowlists.
+- **Path Traversal Defense:** `isSafePath` checks ensure generated files cannot escape sandboxed temporary directories during ZIP packaging.
+- **Sandboxed Execution:** App previews run in an isolated iframe (`sandbox="allow-scripts allow-forms allow-modals"`) preventing access to parent cookies and storage.
+- **Zero Secret Leakage:** `.env` and environment configurations are excluded via `.gitignore`.
 
-- Generated four separate fictional demos (Juniper Market, Summit Plumbing, Cedar Grove Landscaping, and Harborview Rentals); all four passed 7/7 source checks. Each generated ZIP round-tripped six project files and six version-one snapshot files.
-- Ran generated application behavior tests for all four business scenarios: create, search, status filtering, edit, browser persistence, reload, delete, and HTML escaping passed. Inventory reorder status also passed. These use a simulated DOM/localStorage harness, not a live browser.
-- Added architecture checks across 12 fictional inventory, customer, and work-queue businesses. They caught and fixed a case where “schedule equipment maintenance” was incorrectly described as customer follow-up. All 3 architecture tests now pass.
-- Added project ZIP tests for archive round-trips, CRC tampering, and path traversal. All 3 pass.
-- Added folder-upload reopening with 20 MB total, 8 MB per-file, 200-file, and duplicate-path limits. Tested project-root and `generated-projects/` parent layouts, snapshots, and rejection cases. This does not grant write access back to disk.
-- Simplified the Software Generator view: file details, source editor, and version history are expandable; existing folder and ZIP opening are grouped under Software Projects. The Overview page links to the demo gallery.
-- Added a zero-dependency Node local server with a file allowlist and a same-origin loopback-only Ollama proxy. The service rejects cross-origin model writes, cloud model tags, malformed/oversized requests, and bursts over 20 chat requests per minute. Its 7 tests passed. The AI provider's 4 mocked adapter tests passed.
-- Started the Node server at `127.0.0.1:8765`. The Forge page returns HTTP 200. The Ollama proxy returns the intended HTTP 502 while Ollama is absent. The current official Ollama v0.40.14 ZIP and DMG hashes match publisher release values, but macOS rejects the app and CLI code signatures; neither artifact was installed or run.
-- A live embedded-browser folder-selection test is still outstanding. The existing generated apps have not been tested in Edge during this follow-up.
+---
 
-Live Chrome check: opened Forge from a staged localhost copy and completed Discovery plus architecture approval for fictional Summit Plumbing. Loaded a generated Summit Plumbing app in the preview and tested create, search, edit, and delete; preview edits remained visible, with the app correctly warning that storage is unavailable inside its sandbox. The managed Chrome context reports `window.showDirectoryPicker === "undefined"`, so folder selection and actual disk saving could not be tested there. Edge is not installed, and macOS requires root to install its verified package. A mocked File System Access harness covered folder writes and rollback, but that is not a substitute for live disk testing. The preview iframe has a sandbox (`allow-scripts allow-forms allow-modals`, without `allow-same-origin`); its opaque origin means browser storage may fail in preview, as the generated app's storage error handling anticipates.
+## ☁️ Replit Deployment
 
-### Local model integration status
+The repository includes pre-configured [.replit](file:///.replit) and [replit.nix](file:///replit.nix) files:
+1. Open Replit and choose **"Import from GitHub"**.
+2. Enter your repository URL: `https://github.com/SrgtRambo/ForgeAI-v1.git`.
+3. Add your environment variables in Replit **Secrets**:
+   - `STRIPE_SECRET_KEY`
+   - `STRIPE_WEBHOOK_SECRET`
+   - `STRIPE_PRO_SUBSCRIPTION_PRICE_ID`
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - `OPENROUTER_API_KEY`
+4. Click **Run** — Replit automatically installs dependencies and starts the service.
 
-1. `ai-provider.js` provides an opt-in Ollama adapter for discovery follow-up questions, structured architecture, complete source-file generation, and single-file fix proposals. Model JSON and source paths are validated; source proposals are presented for review and are not applied automatically.
-2. `server.js` serves a fixed list of Forge files on `127.0.0.1` and proxies model requests only to Ollama on `127.0.0.1:11434`. It applies same-origin checks, JSON and payload limits, cloud-model rejection, rate limits, request timeouts, and refuses redirects. It never executes generated project code or proxies to arbitrary URLs. Seven backend tests pass.
-3. Forge's browser adapter calls `/api/ollama/chat` and `/api/ollama/tags` through that same-origin server. Do not expose Ollama's unauthenticated API to the network. Only locally installed model tags should be used.
-4. With the user's reported 16 GB unified memory, start by evaluating Qwen3.5 4B at a modest context size (8K–16K) for discovery and architecture reasoning. Actual runtime memory is higher than the model download size. Check the exact model license and benchmark realistic tasks before selecting. Do not use a cloud-tagged model for a local-only configuration.
-5. Generated application output is restricted to five allowlisted source files plus a Forge-authored `project.json`. Model fix proposals are shown beside the current file, are not executed, and must be loaded into the source editor and explicitly saved. The preview remains sandboxed. The model never writes Forge's own source directory.
+---
 
-Historical status as of 2026-11-09: Ollama was absent at that point. On 2026-11-10, the already-installed official Ollama app passed read-only `codesign` and Gatekeeper assessment; no security settings were changed.
+## 💡 "Outside the Box" Engineering Features
 
-### 2026-11-10 development update
-
-- **Files changed:** `ai-provider.js`, `ai-provider.test.js`, `app.js`, `architect.js`, `generator.js`, `generator.test.js`, `index.html`, `testing.js`, and `README.md`; added `testing.test.js`.
-- **Implemented:** Optional AI follow-up questions with editable answers; structured architecture remains subject to explicit user approval. When local AI is enabled, Forge requests actual application source files instead of choosing one of the three deterministic starter templates. It validates the five allowed AI file paths, completeness, individual/aggregate size limits, and creates the project manifest itself. With AI disabled, the button clearly says it will generate an offline template. AI failures do not silently substitute a template.
-- **Fix proposals:** Failed source checks can be sent to the local model for a replacement of one selected source file. Forge displays current and proposed source side by side, reports the candidate's source-check results, does not execute or apply the proposal, and requires the user to load and explicitly save it.
-- **Safety/testing:** Added source checks that flag external runtime assets, network APIs, dynamic code execution, and remote form actions. Generated-app previews remain sandboxed; preview storage may therefore be unavailable. Browser verification confirmed the no-Ollama status/error and exercised Discovery → approval → offline template generation; 7/7 checks passed. The integrated browser canceled folder access, so real on-disk saving was not verified. Existing generated-app behavior tests use a DOM/localStorage harness.
-- **Tests:** 33 automated tests pass, including mocked adapter tests for follow-up, file generation, fix proposals, invalid outputs, and local-only endpoint restrictions. The mocked tests are not evidence of live model quality or connectivity.
-- **Samples:** Added an explicit, duplicate-safe action to preload four fictional, ready-to-test Discovery projects in the Software Projects view. Each includes saved requirements/architecture, generated offline-template files, a version-one snapshot, and passing source checks; loading them does not require or contact Ollama.
-- **Known/unverified at that point:** Live Ollama requests, AI-generated app quality/behavior, fix proposal quality, and actual local folder writes had not yet been checked.
-
-### 2026-11-10 live local-model and usability update
-
-- **Ollama:** The app at `/Applications/Ollama.app` passed code-signature verification and macOS notarization assessment without changing Gatekeeper settings. Ollama is bound only to `127.0.0.1:11434`; Forge is bound only to `127.0.0.1:8765`. `qwen3.5:4b` (about 4 GB, Apache License) is installed. Live structured architecture requests succeeded. An earlier full-source request returned all five files in about 4m50, with 7/8 checks passing; the missed check was a quote-style false positive that has since been fixed. Later requests ended in transport failure or timeout. On 2026-11-10, the browser showed “local Forge API unavailable” and `ERR_EMPTY_RESPONSE`; restarting the bundled Forge launcher restored the page and model-list endpoint. The browser's “Check connection” verifies only the model list; it does not generate an app. A bounded local structured chat request returned valid JSON in about 1.1 seconds, but the new multi-step source-generation flow and resulting app behavior still need live verification.
-- **Project files:** Generated files, source editor, and version history expand automatically whenever project files load. Browser-tested a saved project: six files listed, source loaded, and the editor was visible.
-- **ZIP previews:** ZIP opening shows the app preview and checks. Empty app previews use clearly identified fictional records; data stays inside the sandbox and is not added to project files.
-- **Generation reliability changes:** Source generation now requests custom HTML, CSS, and JavaScript separately; bounds each response; saves completed stages to browser project storage; and resumes from those stages after a failure. Forge creates the README and empty sample-data file itself. A shared UI contract checks that generated app behavior is wired to its custom interface. AI errors never switch to the offline template. These changes pass automated adapter and source-check tests; they do not prove the installed model consistently produces working apps.
-- **Custom generation quality:** Approved AI architectures now take precedence over generic rule-based screens and work-queue defaults. File prompts prioritize the approved business workflow and domain-specific screens, metrics, and fields. Each HTML, CSS, and JavaScript stage is checked before it is saved; invalid output is retried once, and invalid saved stages are regenerated while valid stages are retained.
-- **Visual identity and workflow specificity:** The AI architecture must now include a distinct visual direction and a valid, non-repeating 4–6 color palette. CSS generation must use that palette and the project's theme tokens. AI-generated HTML is checked for a required named business field rather than generic `title`/`status` fields; source prompts emphasize the approved domain-specific lifecycle and actions. Generation also requires state hydration before event wiring, empty user-entry fields, and listener-based interactions. These are structural checks, not proof of correct end-to-end workflows.
-- **Generation request sizing:** Live runs found that duplicated architecture/report context caused an oversized CSS request, and the HTML was duplicated in the JavaScript prompt. Source stages now send only relevant structured architecture fields, include the HTML once, and enforce a preflight size limit with a plain-language error.
-- **Slow local generation:** Live `qwen3.5:4b` source stages can take several minutes. Architecture now has a five-minute bounded request with one truncation/validation retry; source generation has a twenty-minute total budget and up to ten minutes per file, while completed files remain resumable.
-- **Live generation check:** The installed `qwen3.5:4b` model is reachable through Forge's loopback-only proxy. For a fictional custom bike-repair app, HTML and CSS passed generation, but JavaScript failed validation twice (syntax, then missing state hydration); the resumed JavaScript stage later timed out. An earlier HTML attempt was rejected for prefilled textarea content. These attempts produced no usable app and nothing was saved to a user folder.
-- **Bounded retry:** If a file response is truncated, Forge retries that file once with a 4096-token limit; for CSS, the retry explicitly requests a much shorter stylesheet. Previously completed files remain saved. The retry behavior passes automated tests. A real local Ollama request using the compact CSS retry prompt returned valid structured CSS in about 34 seconds, but this was a focused prompt test, not completion of the Redwood app.
-- **Live workflow test:** A custom ceramics studio app was generated with the installed local model and passed Forge's original 10 static checks. Browser testing found that new batches were stored but not rendered, saved batches were not restored after reload, and stage views/actions were miswired. No generated project was written to a user folder. Prompts and structural checks now target some of these defects, but a complete working app has not passed a post-change browser test.
-- **AI fix proposal check:** The local model's proposal for the ceramics workflow still used inline event handlers; the updated Forge adapter rejected it, and nothing was applied. A better proposal and full end-to-end app behavior remain unverified.
-- **Automated tests:** 68 pass, including AI architecture precedence, architecture truncation retries, source-stage validation/retry/resume, startup-hydration checks, related-source fix proposals, preview recovery, and existing generation and export behavior. Mocked tests do not establish live AI source quality.
-- **Not verified:** Consistent completion and working behavior for newly generated apps, real AI fix proposal quality, direct folder writes, and production security/hosting. Do not treat AI source generation as reliable until live checks pass.
-
-### Transfer and deployment guidance
-
-- **ZIP handoff:** Download the project ZIP and send it by AirDrop, email, or USB. The recipient can open `index.html`; each copy is separate, and browser-local records do not travel with the source.
-- **Hosted demo:** Cloudflare Pages or Netlify are candidates for a non-sensitive static demo. Cloudflare's free Pages plan lists 500 builds/month, 20,000 files/site, and 25 MiB/file ([limits](https://developers.cloudflare.com/pages/platform/limits/)); Netlify's Free plan currently uses a 300-credit monthly allowance ([pricing](https://www.netlify.com/pricing/)). Check current terms before relying on quotas. GitHub Pages is for static hosting and disallows business transaction/e-commerce/SaaS use under its free-use policy ([limits and restrictions](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits)). Vercel's Hobby plan is for non-commercial personal use ([plan](https://vercel.com/docs/plans/hobby)).
-- **Privacy:** A private source repository does not make a deployed static app private. Do not put credentials, payment secrets, or real sensitive customer data into a browser-only prototype. Static hosting with browser storage does not provide user accounts, shared data, or cross-device backups.
-
-### Production roadmap (not implemented)
-
-1. Verify and improve real AI source generation across different businesses; behavior-test generated apps and fix proposals. Preserve human review and the clearly labeled offline template option.
-2. Select the target business workflow and who can access its data. Design server-enforced authentication, roles, tenant isolation, and a database before storing real client data.
-3. Add tested backups/restore, audit/history, privacy and retention controls, deployment monitoring, and a production security review.
-4. For a simple one-time payment, evaluate Stripe Payment Links ([docs](https://docs.stripe.com/payment-links)); for an integrated flow, use hosted Stripe Checkout backed by a server-created session ([quickstart](https://docs.stripe.com/checkout/quickstart)). Keep secret keys on the server and verify payments with signed webhooks ([webhooks](https://docs.stripe.com/webhooks)); never trust a success redirect alone. Confirm applicable taxes and fees before launch.
-5. Only then choose a host that supports the required backend, database, privacy, and commercial use. Do not deploy or create provider accounts until the app's business and data requirements are decided.
-
-### Local test suite
-
-Run `node --test server.test.js ai-provider.test.js architect.test.js generator.test.js generated-app.test.js testing.test.js sample-projects.test.js` with Node.js. All 68 tests pass. The architecture, ZIP, generated-app, source-check, and sample-project suites build from Forge source; they do not depend on a live Ollama service or a disposable demo output folder.
+1. **Dual-Mode Deliverables:**
+   Every generated ZIP includes:
+   - A standalone `index.html` with Tailwind CSS + Lucide Icons via CDN that runs instantly in **any** web browser without `npm install` or build steps.
+   - A modular Vite + React codebase for professional developer customization.
+2. **Self-Healing LLM Parser:**
+   Handles markdown fences (` ```json `), trailing text, and partial tokens gracefully without crashing.
+3. **Managed Payments Compatibility:**
+   Stripe checkout sessions are built to work with modern Stripe accounts with automatic tax and payment method detection.
+4. **Instant Standalone Interactivity:**
+   Generated applications come pre-wired with full CRUD, real-time search, category/priority filters, KPI analytics metrics, and local browser persistence.

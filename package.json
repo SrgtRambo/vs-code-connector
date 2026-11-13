@@ -12,7 +12,8 @@
     "test": "node --test *.test.js",
     "test:backend": "cd backend && node --test test_backend.js",
     "test:all": "node --test *.test.js && cd backend && node --test test_backend.js",
-    "backend": "cd backend && node server.js"
+    "backend": "cd backend && node server.js",
+    "server": "node server.js"
   },
   "overrides": {
     "rolldown": "1.2.1"

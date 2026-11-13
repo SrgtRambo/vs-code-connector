@@ -614,8 +614,44 @@ npm run dev
   };
 }
 
-// ---------- Express Middleware ----------
-app.use(express.json());
+// ---------- Security Middlewares ----------
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
+// Sliding-window rate limiter
+const requestRates = new Map();
+function rateLimiter(limit = 60, windowMs = 60000) {
+  return (req, res, next) => {
+    const ip = req.ip || req.headers['x-forwarded-for'] || req.socket.remoteAddress || 'unknown';
+    const now = Date.now();
+    const clientData = requestRates.get(ip) || { count: 0, resetTime: now + windowMs };
+    if (now > clientData.resetTime) {
+      clientData.count = 1;
+      clientData.resetTime = now + windowMs;
+    } else {
+      clientData.count++;
+    }
+    requestRates.set(ip, clientData);
+    if (clientData.count > limit) {
+      return res.status(429).json({ error: 'Too many requests. Please slow down.' });
+    }
+    next();
+  };
+}
+
+app.use(express.json({ limit: '1mb' }));
+app.use(rateLimiter(120, 60000));
+
+// Path traversal safety helper
+function isSafePath(baseDir, relativePath) {
+  const resolved = path.resolve(baseDir, relativePath);
+  return resolved.startsWith(path.resolve(baseDir) + path.sep);
+}
 
 // ---------- Health & Info Routes ----------
 app.get('/health', (req, res) => {
@@ -638,6 +674,18 @@ app.post('/create-checkout', async (req, res) => {
   if (!email || !prompt || !type) {
     return res.status(400).json({ error: 'Missing required fields: email, prompt, type' });
   }
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (!emailRegex.test(email)) {
+    return res.status(400).json({ error: 'Invalid email address format' });
+  }
+
+  if (typeof prompt !== 'string' || prompt.length > 4000) {
+    return res.status(400).json({ error: 'Prompt must be a string under 4000 characters' });
+  }
+
+  const validTypes = ['website', 'software', 'spreadsheet', 'app', 'dashboard', 'ecommerce'];
+  const safeType = validTypes.includes(type.toLowerCase()) ? type.toLowerCase() : 'website';
 
   try {
     const user = await getOrCreateUser(email);
@@ -773,8 +821,12 @@ app.post('/webhook', async (req, res) => {
       // Generate project files via AI or fallback
       const generatedFiles = await generateProject(prompt || 'Modern web application', type || 'website', model);
 
-      // Write files to temporary folder
+      // Write files to temporary folder safely
       for (const [relPath, content] of Object.entries(generatedFiles)) {
+        if (!isSafePath(tempDir, relPath)) {
+          console.warn('Rejected unsafe file path:', relPath);
+          continue;
+        }
         const absPath = path.join(tempDir, relPath);
         await fs.mkdir(path.dirname(absPath), { recursive: true });
         await fs.writeFile(absPath, typeof content === 'string' ? content : JSON.stringify(content, null, 2));

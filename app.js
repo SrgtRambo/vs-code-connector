@@ -830,6 +830,59 @@
     projects = []; current = null; currentFiles = null; currentFolder = null; localStorage.removeItem(STORE); clearGeneratedUI(); persist(); showNotice("settingsNotice", "Local project metadata cleared. Files saved in project folders were not changed.", false); updateApprovalControls();
   });
 
+  // Viewport switcher for live app preview
+  document.querySelectorAll(".btn-vp").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll(".btn-vp").forEach((b) => {
+        b.style.background = "transparent";
+        b.style.color = "#94a3b8";
+        b.classList.remove("active");
+      });
+      btn.style.background = "#1e293b";
+      btn.style.color = "#f8fafc";
+      btn.classList.add("active");
+      const preview = $("preview");
+      if (!preview) return;
+      const vp = btn.dataset.vp;
+      if (vp === "mobile") {
+        preview.style.maxWidth = "375px";
+        preview.style.margin = "0 auto";
+        preview.style.display = "block";
+      } else if (vp === "tablet") {
+        preview.style.maxWidth = "768px";
+        preview.style.margin = "0 auto";
+        preview.style.display = "block";
+      } else {
+        preview.style.maxWidth = "100%";
+        preview.style.margin = "0";
+        preview.style.display = "block";
+      }
+    });
+  });
+
+  // Auto-enrich discovery requirements
+  const enrichBtn = $("autoEnrichBtn");
+  if (enrichBtn) {
+    enrichBtn.addEventListener("click", () => {
+      const biz = $("business").value.trim() || "Apex Solutions";
+      const ind = $("industry").value || "Home Services";
+      const prob = $("problem").value.trim();
+
+      if (!$("business").value) $("business").value = biz;
+      if (!$("activities").value) $("activities").value = `Delivering scheduled client engagements, managing field operations, and processing operational invoices for ${biz}.`;
+      if (!$("tools").value) $("tools").value = "Manual spreadsheets, fragmented SMS, paper intake forms, and email threads";
+      if (!$("problem").value) $("problem").value = prob || `Operations team struggles with delayed customer follow-ups and disorganized job status handoffs.`;
+      if (!$("workflow").value) $("workflow").value = "1. Customer request received -> 2. Job dispatch and status update -> 3. Service completion -> 4. Review and invoicing";
+      if (!$("goal").value) $("goal").value = `A responsive digital workbench to track work orders, manage client communication in real time, and eliminate operational bottlenecks.`;
+      if (!$("features").value) $("features").value = "Real-time status queue, customer search & filtering, KPI metric counters, modal record editing, and export capabilities";
+      if (!$("users").value) $("users").value = "Business Owner, Operations Coordinator, Field Technician";
+      if (!$("success").value) $("success").value = "Zero missed follow-ups and 40% reduction in job handoff turnaround time";
+      if (!$("constraints").value) $("constraints").value = "Mobile-friendly, responsive layout, works offline with persistent local browser storage";
+
+      showToast("✨ Requirements auto-enriched for " + biz + "!");
+    });
+  }
+
   initializeAIFixReview();
   // Restore the most recently updated project as the active workspace on reload.
   if (projects.length) { const latest = projects.slice().sort((a, b) => (b.updatedAt || "").localeCompare(a.updatedAt || ""))[0]; current = latest; currentFiles = latest.files || null; showCurrentProject(); if (currentFiles) installFiles(currentFiles, true); }
